@@ -1,0 +1,35 @@
+name: Release Artifacts
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  build:
+    uses: ./.github/workflows/main.yml
+    secrets: inherit
+
+  release-artifacts:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Download sysroot (wasm32-wasip1-threads)
+        uses: actions/download-artifact@v4
+        with:
+          name: sysroot-wasm32-wasip1-threads.tgz
+          path: sysroot-wasm32-wasip1-threads
+
+      - name: List files
+        run: ls -la
+
+      - name: Compress sysroot
+        run: tar -czf sysroot-wasm32-wasip1-threads.tgz -C sysroot-wasm32-wasip1-threads .
+
+      - name: Push artifacts to release
+        uses: softprops/action-gh-release@v2
+        with:
+          prerelease: false
+          token: ${{ secrets.RELEASE_TOKEN }}
+          files: |
+            sysroot-*.tgz
